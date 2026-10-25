@@ -1,0 +1,66 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: telemed-business-alerts
+  namespace: telemed-ns
+  labels:
+    role: alert-rules
+    release: prometheus-stack
+spec:
+  groups:
+    - name: telemedicina.rules
+      rules:
+        # Alerta 1: Servicio A Caido
+        - alert: RecipeServiceDown
+          expr: up{job="recipe-service"} == 0
+          for: 30s
+          labels:
+            severity: critical
+            team: platform
+          annotations:
+            summary: "Servicio de Recetas Medicas Caido"
+            description: "El microservicio recipe-service no responde a las solicitudes de scraping de Prometheus en telemed-ns durante mas de 30 segundos."
+
+        # Alerta 2: Servicio B Caido
+        - alert: DispensaryServiceDown
+          expr: up{job="dispensary-service"} == 0
+          for: 30s
+          labels:
+            severity: critical
+            team: platform
+          annotations:
+            summary: "Servicio de Dispensacion Farmaceutica Caido"
+            description: "El microservicio dispensary-service no responde a las solicitudes de scraping de Prometheus en telemed-ns durante mas de 30 segundos."
+
+        # Alerta 3 (Negocio): Alta Latencia / Delay en Servicio de Recetas (Casuistica 2)
+        - alert: HighRecipeServiceLatency
+          expr: recipe_artificial_delay_gauge > 2000
+          for: 15s
+          labels:
+            severity: warning
+            team: telemed-core
+          annotations:
+            summary: "Latencia Excesiva en Servicio de Recetas"
+            description: "El gauge de latencia artificial de recipe-service supera los 2000 ms (actual: {{ $value }} ms). Riesgo inminente de timeout en el servicio de dispensacion."
+
+        # Alerta 4 (Negocio): Fallas de Comunicacion y Timeouts en Dispensacion (Casuistica 2)
+        - alert: DispensaryCommunicationTimeouts
+          expr: increase(dispensary_external_call_failures_total[1m]) > 2
+          for: 20s
+          labels:
+            severity: error
+            team: telemed-integration
+          annotations:
+            summary: "Tasa elevada de timeouts hacia recipe-service"
+            description: "El servicio de dispensacion farmaceutica ha registrado mas de 2 fallos/timeouts al intentar consultar el servicio de recetas en el ultimo minuto."
+
+        # Alerta 5 (Negocio Adicional): Agotamiento Critico de Stock Farmaceutico (Casuistica 3)
+        - alert: PharmacyCriticalLowStock
+          expr: dispensary_stock_levels < 5
+          for: 15s
+          labels:
+            severity: warning
+            team: pharmacy-logistics
+          annotations:
+            summary: "Stock critico de medicamento en farmacia"
+            description: "El medicamento con codigo {{ $labels.medication_code }} tiene un stock menor a 5 unidades (actual: {{ $value }}). Se requiere reposicion inmediata."

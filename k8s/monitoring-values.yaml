@@ -1,0 +1,50 @@
+# =========================================================================
+# Valores personalizados para el chart Helm: kube-prometheus-stack
+# Repositorio oficial: prometheus-community/kube-prometheus-stack
+# =========================================================================
+
+# Configuracion de Grafana
+grafana:
+  enabled: true
+  adminPassword: "AdminValleGrande2026!"
+  service:
+    type: NodePort
+    nodePort: 30000
+  ingress:
+    enabled: false
+  persistence:
+    enabled: false
+
+# Configuracion del Prometheus Operator y Servidor Prometheus
+prometheus:
+  enabled: true
+  service:
+    type: NodePort
+    nodePort: 30090
+  prometheusSpec:
+    # CRITICO: Permitir descubrir ServiceMonitors en cualquier namespace
+    # Si esta en true (default de Helm), Prometheus solo raspa en su propio namespace
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+
+    # CRITICO: Permitir descubrir PrometheusRules en cualquier namespace
+    ruleSelectorNilUsesHelmValues: false
+    ruleSelector: {}
+
+    # Intervalo de scraping global
+    scrapeInterval: "10s"
+    evaluationInterval: "10s"
+
+# AlertManager
+alertmanager:
+  enabled: true
+  service:
+    type: NodePort
+    nodePort: 30093
+
+# Metricas de nodos y cluster
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true

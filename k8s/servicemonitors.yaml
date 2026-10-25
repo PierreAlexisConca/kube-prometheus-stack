@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: recipe-servicemonitor
+  namespace: telemed-ns
+  labels:
+    app: recipe-service
+    release: prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: recipe-service
+  namespaceSelector:
+    matchNames:
+      - telemed-ns
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 10s
+      scrapeTimeout: 9s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: dispensary-servicemonitor
+  namespace: telemed-ns
+  labels:
+    app: dispensary-service
+    release: prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: dispensary-service
+  namespaceSelector:
+    matchNames:
+      - telemed-ns
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 10s
+      scrapeTimeout: 9s
